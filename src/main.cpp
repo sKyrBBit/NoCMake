@@ -6,35 +6,82 @@ using namespace std;
 
 uint32_t ti;
 #define write_int(i) ti = i;fout.write((char*) &ti, 4)
+#define write_string(s) fout << s << '\0'
 
 int main() {
-  ofstream fout("tmp/test.wc", ios::in | ios::binary);
-  write_int(0xdeadbeefu); // magic
-  write_int(0x0000000du); // function_size: 13
-  write_int(0x0000001cu); // const r0 0
-  write_int(0x0001011cu); // const r1 1
-  write_int(0x00ff021cu); // const r2 255
-  write_int(0x02000924u); // ifgt 9 r0 r2
-  write_int(0x0001031cu); // const r3 1
-  write_int(0x0002041cu); // const r4 2
-  write_int(0x0003051cu); // const r5 3
-  write_int(0x05040612u); // mul r6 r4 r5
-  write_int(0x06030710u); // add r7 r3 r6
-  write_int(0x0000071eu); // out r7
-  write_int(0x01000010u); // add r0 r0 r1
-  write_int(0x00000821u); // back 8
-  write_int(0x00000001u); // exit
-  write_int(0x00000000u); // method_count: 0
-  fout.flush();
-  
-  auto start = chrono::system_clock::now();
-
+  ofstream fout;
   auto vm = new VirtualMachine;
-  auto main = vm->from_WC("tmp/test");
-  vm->execute(main);
+
+  // write test1
+  fout.open("tmp/test1.wc", ios::in | ios::binary);
+  write_int(0xdeadbeefu); // magic
+  write_int(0x00000011u); // function_size: 17
+  write_int(0x1c020100u); // const r2 1
+  write_int(0x1c03ff00u); // const r3 255
+  write_int(0x1c000000u); // const r0 0
+  write_int(0x240d0003u); // ifgt 13 r0 r3
+  write_int(0x1c010000u); // const r1 0
+  write_int(0x24090103u); // ifgt 9 r1 r3
+  write_int(0x1c040100u); // const r4 1
+  write_int(0x1c050200u); // const r5 2
+  write_int(0x1c060300u); // const r6 3
+  write_int(0x12070506u); // mul r7 r5 r6
+  write_int(0x10080407u); // add r8 r4 r7
+  write_int(0x1e080000u); // iout r8
+  write_int(0x10010102u); // add r1 r1 r2
+  write_int(0x21080000u); // back 8
+  write_int(0x10000002u); // add r0 r0 r2
+  write_int(0x210c0000u); // back 12
+  write_int(0x01000000u); // exit
+  write_int(0x00000000u); // method_count: 0
+  write_int(0x00000000u); // string_count: 0
+  fout.close();
+
+  auto start1 = chrono::system_clock::now();
+
+  // execute test1
+  auto main1 = vm->from_WC("tmp/test1");
+  vm->execute(main1);
   
-  auto end = chrono::system_clock::now();
-  double elapsed = chrono::duration_cast<chrono::milliseconds>(end-start).count();
-  printf("time %lf[ms]\n", elapsed);
+  auto end1 = chrono::system_clock::now();
+  auto elapsed1 = chrono::duration_cast<chrono::milliseconds>(end1-start1).count();
+  printf("time %ld[ms]\n", elapsed1);
+
+  // write test2
+  fout.open("tmp/test2.wc", ios::in | ios::binary);
+  write_int(0xdeadbeefu); // magic
+  write_int(0x00000002u); // function_size: 2
+  write_int(0x0a000000u); // sout 0
+  write_int(0x01000000u); // exit
+  write_int(0x00000000u); // method_count: 0
+  write_int(0x00000002u); // string_count: 2
+  write_int(0x00000004u); // string_size: 4
+  write_string("Hello My World!");
+  write_int(0x00000004u); // string_size: 4
+  write_string("I am skyrabbit.");
+  fout.close();
+
+  auto start2 = chrono::system_clock::now();
+
+  // execute test2
+  auto main2 = vm->from_WC("tmp/test2");
+  vm->execute(main2);
+  
+  auto end2 = chrono::system_clock::now();
+  auto elapsed2 = chrono::duration_cast<chrono::milliseconds>(end2-start2).count();
+  printf("time %ld[ms]\n", elapsed2);
+
+  // jit_compile main1
+  auto attribute = new vm_function_attribute;
+  attribute->type = "void";
+  attribute->name = "loop";
+  attribute->size = 17;
+  attribute->body = main1;
+  auto index = vm->jit_compile(attribute);
+  vm->jit_execute(index);
+
   return 0;
 }
+
+#undef write_int
+#undef write_string

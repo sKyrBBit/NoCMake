@@ -9,10 +9,17 @@
 using namespace std;
 
 struct instruction {
-  uint8_t type;
-  uint8_t operand0;
-  uint8_t operand1;
   uint8_t operand2;
+  uint8_t operand1;
+  uint8_t operand0;
+  uint8_t type;
+};
+struct vm_function_attribute {
+  string type;
+  string name;
+  uint32_t size;
+  instruction* body;
+  vm_function_attribute** parents;
 };
 
 #endif
