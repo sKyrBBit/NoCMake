@@ -2,8 +2,6 @@
 #define RCWT_VIRTUALMACHINE_H
 
 #include "rcwt.h"
-#include <utility>
-#include <string>
 
 class VirtualMachine {
 public:
@@ -12,14 +10,14 @@ public:
     this->heap = vector<uint32_t>(32);
     this->registers = vector<uint32_t>(32);
     this->vm_functions = nullptr;
-	this->jit_functions = vector<void(*)()>();
-	this->strings = nullptr;
+	  this->jit_functions = vector<void(*)()>();
+	  this->strings = nullptr;
     this->stack_pointer = &stack.front();
     this->base_pointer = nullptr;
-	// debug
-	this->vm_function_count = 0u;
-	this->vm_function_attributes = vector<vm_function_attribute>(32);
-	this->string_count = 0u;
+	  // debug
+	  this->vm_function_count = 0u;
+	  this->vm_function_attributes = vector<vm_function_attribute>(32);
+    this->string_count = 0u;
     // converter
     this->value_placeholder = vector<uint32_t>(32);
     this->pointer_placeholder = vector<uint32_t*>(32);
@@ -60,7 +58,7 @@ private:
   char* read_string();
   char** read_strings();
   // JIT compiler
-  void import_function(void*, void*, string); // unsafe
+  void import_function(void*, void*, string const&); // unsafe
 };
 
 #endif

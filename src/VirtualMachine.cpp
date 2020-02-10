@@ -1,4 +1,6 @@
 #include "VirtualMachine.h"
+#include <utility>
+#include <string>
 #include <dlfcn.h>
 
 inline void VirtualMachine::push(uint32_t i) {
@@ -260,8 +262,17 @@ instruction* VirtualMachine::from_WC(string const& file_name) {
   wc += ".wc";
   ifstream fin(wc.c_str(), ios::in | ios::binary);
   if (!fin) {
-    cout << "error | file `"<< wc.c_str() <<"` didn't open" << endl;
+    cout << "error | file `" << wc.c_str() << "` didn't open" << endl;
     exit(1);
+  }
+  // check if magic is valid or not
+  uint32_t magic = 0u;
+  fin.read(reinterpret_cast<char*>(&magic), 4);
+  DEBUG_OUT_HEX("magic : ", magic);
+  if (magic != 0xdeadbeef) {
+    cout << "error | file `" << wc.c_str() << "` is invalid" << endl;
+    fin.close();
+    return nullptr;
   }
   while (!fin.eof()) {
     uint8_t buffer = 0;
@@ -269,14 +280,6 @@ instruction* VirtualMachine::from_WC(string const& file_name) {
     input.push_back(buffer);
   }
   fin.close();
-
-  // check if magic is valid or not
-  uint32_t magic = read_int();
-  DEBUG_OUT_HEX("magic : ", magic);
-  if (magic != 0xdeadbeef) {
-    cout << "error | file is invalid" << endl;
-    exit(1);
-  }
   
   // load wc into memory
   auto tmp = read_vm_function();
@@ -494,7 +497,7 @@ uint32_t VirtualMachine::jit_compile(vm_function_attribute* attribute) {
 void VirtualMachine::jit_execute(uint32_t index) {
   jit_functions[index]();
 }
-void VirtualMachine::import_function(void* from, void* to, string target) {
+void VirtualMachine::import_function(void* from, void* to, string const& target) {
   void* src = dlsym(from, target.c_str());
   void* dst = dlsym(to, target.c_str());
   *(void**) dst = src;

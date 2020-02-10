@@ -8,6 +8,8 @@
 
 using namespace std;
 
+void environment();
+
 struct instruction {
   uint8_t operand2;
   uint8_t operand1;

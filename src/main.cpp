@@ -4,6 +4,24 @@
 
 using namespace std;
 
+void environment() {
+#if defined(__LITTLE_ENDIAN__)
+  cout << "Endian: Little" << endl;
+#elif defined(__BIG_ENDIAN__)
+  cout << "Endian: Big" << endl;
+#else
+  int e = 1;
+  if (*(char*)&e) cout << "Endian: Little" << endl;
+  else cout << "Endian: Big" << endl;
+#endif
+#if defined(_WIN32)
+  cout << "OS: Windows(32bit)" <<  endl;
+#elif defined(__linux)
+  cout << "OS: Linux" << endl;
+#endif
+}
+
+
 uint32_t ti;
 #define write_int(i) ti = i;fout.write((char*) &ti, 4)
 #define write_string(s) fout << s << '\0'
