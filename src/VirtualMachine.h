@@ -6,8 +6,8 @@
 class VirtualMachine {
 public:
   VirtualMachine() {
-    this->stack = vector<uint32_t>(32);
-    this->heap = vector<uint32_t>(32);
+    this->stack = vector<uint32_t>();
+    this->heap = vector<uint32_t>();
     this->registers = vector<uint32_t>(32);
     this->vm_functions = nullptr;
 	this->jit_functions = vector<void(*)()>();
@@ -16,11 +16,11 @@ public:
     this->base_pointer = nullptr;
 	// debug
 	this->vm_function_count = 0u;
-	this->vm_function_attributes = vector<vm_function_attribute>(32);
+	this->vm_function_attributes = vector<vm_function_attribute>();
     this->string_count = 0u;
     // converter
-    this->pointer_placeholder = vector<uint32_t*>(32);
-    this->value_placeholder = vector<uint8_t>(32);
+    this->pointer_placeholder = vector<uint32_t*>();
+    this->value_placeholder = vector<uint8_t>();
     this->index = 0u;
   }
   void execute(instruction*);

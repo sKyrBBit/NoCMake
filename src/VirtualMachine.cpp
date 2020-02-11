@@ -201,10 +201,8 @@ void VirtualMachine::execute(instruction* main) {
 #endif
 
 inline uint8_t* VirtualMachine::read(uint32_t size) {
-  auto tmp = new uint8_t[size];
-  for (uint32_t u = 0u; u < size; u++) {
-    tmp[u] = value_placeholder[index++];
-  }
+  auto tmp = &value_placeholder[index];
+  index += size;
   return tmp;
 }
 inline uint32_t VirtualMachine::read_int() {
@@ -279,7 +277,6 @@ instruction* VirtualMachine::from_WC(string const& file_name) {
   auto main = read_vm_function();
   vm_functions = read_vm_functions();
   strings = read_strings();
-  if (string_count) cout << (strings[0] == nullptr) << endl;
   return main;
 }
 

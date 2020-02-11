@@ -9,6 +9,7 @@
 using namespace std;
 
 void environment();
+void dump(const void*, uint32_t);
 
 struct instruction {
   uint8_t operand2;
