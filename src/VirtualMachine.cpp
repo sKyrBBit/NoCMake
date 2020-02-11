@@ -248,7 +248,7 @@ inline char** VirtualMachine::read_strings() {
 }
 instruction* VirtualMachine::from_WC(string const& file_name) {
   // read `wc` file
-  value_placeholder.clear();
+  value_placeholder.clear(); // TODO remove
   index = 0u;
   string wc = string(file_name);
   wc += ".wc";
@@ -347,7 +347,7 @@ uint32_t VirtualMachine::jit_compile(vm_function_attribute* attribute) {
       fout << "  r" << +i.operand0 << " = r" << +i.operand1 << ";" << endl;
     } NEXT;
     CASE(SOUT) {
-      fout << "  cout << strings" << +i.operand0 << ";" << endl;
+      fout << "  printf(\"" << strings[i.operand0] << "\");" << endl;
     } NEXT;
     CASE(CASL) {
       fout << "  __sync_bool_compare_and_swap(&r" << +i.operand0 << ", r" << +i.operand1 << ", r[i.operand2]);" << endl;
