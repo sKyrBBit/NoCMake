@@ -10,18 +10,17 @@ public:
     this->heap = vector<uint32_t>(32);
     this->registers = vector<uint32_t>(32);
     this->vm_functions = nullptr;
-	  this->jit_functions = vector<void(*)()>();
-	  this->strings = nullptr;
+	this->jit_functions = vector<void(*)()>();
+	this->strings = nullptr;
     this->stack_pointer = &stack.front();
     this->base_pointer = nullptr;
-	  // debug
-	  this->vm_function_count = 0u;
-	  this->vm_function_attributes = vector<vm_function_attribute>(32);
+	// debug
+	this->vm_function_count = 0u;
+	this->vm_function_attributes = vector<vm_function_attribute>(32);
     this->string_count = 0u;
     // converter
-    this->value_placeholder = vector<uint32_t>(32);
     this->pointer_placeholder = vector<uint32_t*>(32);
-    this->input = vector<uint8_t>(32);
+    this->value_placeholder = vector<uint8_t>(32);
     this->index = 0u;
   }
   void execute(instruction*);
@@ -47,9 +46,8 @@ private:
   vector<vm_function_attribute> vm_function_attributes;
   uint32_t string_count;
   // converter
-  vector<uint32_t> value_placeholder;
   vector<uint32_t*> pointer_placeholder;
-  vector<uint8_t> input;
+  vector<uint8_t> value_placeholder;
   uint32_t index;
   uint8_t* read(uint32_t);
   uint32_t read_int();

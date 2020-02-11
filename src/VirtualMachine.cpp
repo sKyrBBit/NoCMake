@@ -158,13 +158,13 @@ void VirtualMachine::execute(instruction* main) {
       heap.push_back(registers[1]); // TODO back() can be available only if the vector isn't empty.
       auto tmp = &heap.back();
       for (uint32_t u = 0; u < i.operand1; u++) heap.push_back(0u);
-      // TODO registers[i.operand0] = (uint32_t) ++tmp;
+      registers[i.operand0] = *reinterpret_cast<uint32_t*>(++tmp);
     } NEXT;
     CASE(SET) {
-      ((uint32_t*) registers[i.operand0])[i.operand1] = registers[i.operand2];
+      reinterpret_cast<uint32_t*>(registers[i.operand0])[i.operand1] = registers[i.operand2];
     } NEXT;
     CASE(GET) {
-      registers[i.operand0] = ((uint32_t*) registers[i.operand1])[i.operand2];
+      registers[i.operand0] = reinterpret_cast<uint32_t*>(registers[i.operand1])[i.operand2];
     } NEXT;
     CASE(CALL) {
       // TODO
@@ -203,34 +203,24 @@ void VirtualMachine::execute(instruction* main) {
 inline uint8_t* VirtualMachine::read(uint32_t size) {
   auto tmp = new uint8_t[size];
   for (uint32_t u = 0u; u < size; u++) {
-    tmp[u] = input[index++];
+    tmp[u] = value_placeholder[index++];
   }
   return tmp;
 }
 inline uint32_t VirtualMachine::read_int() {
-  return *(uint32_t*) read(4);
+  return *reinterpret_cast<uint32_t*>(read(4));
 }
 inline instruction* VirtualMachine::read_vm_function() {
   auto vm_function_size = read_int();
   DEBUG_OUT_HEX("vm_function size : ", vm_function_size);
   if (vm_function_size == 0u) return nullptr;
-  value_placeholder.push_back(vm_function_size); // TODO back() can be available only if the vector isn't empty.
-  auto tmp = &value_placeholder.back();
-  for (uint32_t i = 0u; i < vm_function_size; i++) {
-    value_placeholder.push_back(read_int());
-  }
-  return (instruction*) ++tmp;
+  return reinterpret_cast<instruction*>(read(vm_function_size * 4));
 }
 inline char* VirtualMachine::read_string() {
-  auto size = read_int();
-  DEBUG_OUT_HEX("string size : ", size);
-  if (size == 0u) return nullptr;
-  value_placeholder.push_back(size); // TODO back() can be available only if the vector isn't empty.
-  auto tmp = &value_placeholder.back();
-  for (uint32_t i = 0u; i < size; i++) {
-    value_placeholder.push_back(read_int());
-  }
-  return (char*) ++tmp;
+  auto string_size = read_int();
+  DEBUG_OUT_HEX("string size : ", string_size);
+  if (string_size == 0u) return nullptr;
+  return reinterpret_cast<char*>(read(string_size));
 }
 inline instruction** VirtualMachine::read_vm_functions() {
   vm_function_count = read_int();
@@ -239,9 +229,11 @@ inline instruction** VirtualMachine::read_vm_functions() {
   auto is_empty = pointer_placeholder.empty(); // TODO back() can be available only if the vector isn't empty.
   auto tmp = &pointer_placeholder.back();
   for (uint32_t i = 0u; i < vm_function_count; i++) {
-    pointer_placeholder.push_back((uint32_t*) read_vm_function());
+    pointer_placeholder.push_back(reinterpret_cast<uint32_t*>(read_vm_function()));
   }
-  return is_empty ? (instruction**) &pointer_placeholder.front() : (instruction**) ++tmp;
+  return is_empty
+    ? reinterpret_cast<instruction**>(&pointer_placeholder.front())
+	: reinterpret_cast<instruction**>(++tmp);
 }
 inline char** VirtualMachine::read_strings() {
   string_count = read_int();
@@ -250,13 +242,15 @@ inline char** VirtualMachine::read_strings() {
   auto is_empty = pointer_placeholder.empty(); // TODO back() can be available only if the vector isn't empty.
   auto tmp = &pointer_placeholder.back();
   for (uint32_t i = 0u; i < string_count; i++) {
-    pointer_placeholder.push_back((uint32_t*) read_string());
+    pointer_placeholder.push_back(reinterpret_cast<uint32_t*>(read_string()));
   }
-  return is_empty ? (char**) &pointer_placeholder.front() : (char**) ++tmp;
+  return is_empty
+    ? reinterpret_cast<char**>(&pointer_placeholder.front())
+	: reinterpret_cast<char**>(++tmp);
 }
 instruction* VirtualMachine::from_WC(string const& file_name) {
   // read `wc` file
-  input.clear();
+  value_placeholder.clear();
   index = 0u;
   string wc = string(file_name);
   wc += ".wc";
@@ -276,16 +270,17 @@ instruction* VirtualMachine::from_WC(string const& file_name) {
   }
   while (!fin.eof()) {
     uint8_t buffer = 0;
-    fin.read((char*) &buffer, 1);
-    input.push_back(buffer);
+    fin.read(reinterpret_cast<char*>(&buffer), 1);
+    value_placeholder.push_back(buffer);
   }
   fin.close();
   
   // load wc into memory
-  auto tmp = read_vm_function();
+  auto main = read_vm_function();
   vm_functions = read_vm_functions();
   strings = read_strings();
-  return tmp;
+  if (string_count) cout << (strings[0] == nullptr) << endl;
+  return main;
 }
 
 #undef DEBUG_OUT
@@ -491,7 +486,7 @@ uint32_t VirtualMachine::jit_compile(vm_function_attribute* attribute) {
 // 	  auto parent_handle = dlopen(parent_path.c_str(), RTLD_LAZY);
 // 	  import_function(parent_handle, child_handle, parent->name);
 //  }
-  jit_functions.push_back((void (*)()) dlsym(child_handle, attribute->name.c_str()));
+  jit_functions.push_back(reinterpret_cast<void (*)()>(dlsym(child_handle, attribute->name.c_str())));
   return jit_function_count++;
 }
 void VirtualMachine::jit_execute(uint32_t index) {
@@ -500,5 +495,5 @@ void VirtualMachine::jit_execute(uint32_t index) {
 void VirtualMachine::import_function(void* from, void* to, string const& target) {
   void* src = dlsym(from, target.c_str());
   void* dst = dlsym(to, target.c_str());
-  *(void**) dst = src;
+  *reinterpret_cast<void**>(dst) = src;
 }

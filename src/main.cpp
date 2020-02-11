@@ -11,7 +11,7 @@ void environment() {
   cout << "Endian: Big" << endl;
 #else
   int e = 1;
-  if (*(char*)&e) cout << "Endian: Little" << endl;
+  if (*reinterpret_cast<char*>(&e)) cout << "Endian: Little" << endl;
   else cout << "Endian: Big" << endl;
 #endif
 #if defined(_WIN32)
@@ -23,7 +23,7 @@ void environment() {
 
 
 uint32_t ti;
-#define write_int(i) ti = i;fout.write((char*) &ti, 4)
+#define write_int(i) ti = i;fout.write(reinterpret_cast<char*>(&ti), 4)
 #define write_string(s) fout << s << '\0'
 
 int main() {
@@ -73,9 +73,9 @@ int main() {
   write_int(0x01000000u); // exit
   write_int(0x00000000u); // method_count: 0
   write_int(0x00000002u); // string_count: 2
-  write_int(0x00000004u); // string_size: 4
-  write_string("Hello My World!");
-  write_int(0x00000004u); // string_size: 4
+  write_int(0x0000000du); // string_size: 13
+  write_string("Hello World!");
+  write_int(0x00000010u); // string_size: 16
   write_string("I am skyrabbit.");
   fout.close();
 
