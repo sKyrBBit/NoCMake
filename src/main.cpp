@@ -20,30 +20,25 @@ void environment() {
   cout << "OS: Linux" << endl;
 #endif
 }
-void dump(const void* buf, uint32_t size) {
-    int i,j;
-    unsigned char* p = (unsigned char* )buf, tmp[20];
-
-    printf("+0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F|  -- ASCII --\r\n");
-    printf("--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+----------------\r\n");
-    for (i=0; p-(unsigned char* )buf<size; i++) {
-        for (j=0; j<16; j++) {
-            tmp[j] = (unsigned char)((*p<0x20||*p>=0x7f)? '.': *p);
-            printf("%02X ", (int)*p);
-            if (++p-(unsigned char *)buf>=size) {
-                tmp[++j] = '\0';
-                for (;j<16;j++) {
-                    printf("   ");
-                }
-                break;
-            }
-        }
-        tmp[16] = '\0';
-        printf("%s\r\n", tmp);
-        if (p-(unsigned char* )buf>=size) {
-            break;
-        }
+void dump(void* target, uint32_t size) {
+  char* text = new char[20];
+  auto start = reinterpret_cast<unsigned char*>(target);
+  auto end = start;
+  printf(" 0 1 2 3  4 5 6 7  8 9 A B  C D E F   -- ASCII --\n");
+  printf("--------+--------+--------+--------+----------------\n");
+  uint32_t i;
+  do {
+    for (i=0; i<16; i++) {
+      text[i] = (0x20u<=*end && *end<=0x7fu) ? *end : '.';
+      printf(i%4 == 3 ? "%02X " : "%02X", *end);
+      end++;
+      if (end-start>=size) {
+        text[++i] = '\0';
+        for (; i<16; i++) printf(i%4 == 3 ? "   " : "  ");
+      }
     }
+    printf("%s\n", text);
+  } while(end-start<size);
 }
 
 
@@ -129,7 +124,9 @@ void test2() {
 
 int main() {
   test1();
+  cout << endl;
   test2();
+  cout << endl;
   return 0;
 }
 

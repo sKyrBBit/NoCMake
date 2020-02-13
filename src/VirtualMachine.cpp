@@ -473,16 +473,18 @@ uint32_t VirtualMachine::jit_compile(vm_function_attribute* attribute) {
   child_path += attribute->name;
   child_path += ".so";
   auto child_handle = dlopen(child_path.c_str(), RTLD_LAZY);
-//  // import parents
-//  for (uint32_t u = 0u; attribute->parents[u] != nullptr; u++) {
-// 	  auto parent = attribute->parents[u];
-// 	  // open parent
-// 	  auto parent_path = string("tmp/");
-// 	  parent_path += parent->name;
-// 	  parent_path += ".so";
-// 	  auto parent_handle = dlopen(parent_path.c_str(), RTLD_LAZY);
-// 	  import_function(parent_handle, child_handle, parent->name);
-//  }
+  if (attribute->parents != nullptr) {
+ // import parents
+ for (uint32_t u = 0u; attribute->parents[u] != nullptr; u++) {
+	  auto parent = attribute->parents[u];
+	  // open parent
+	  auto parent_path = string("tmp/");
+	  parent_path += parent->name;
+	  parent_path += ".so";
+	  auto parent_handle = dlopen(parent_path.c_str(), RTLD_LAZY);
+	  import_function(parent_handle, child_handle, parent->name);
+ }
+  }
   jit_functions.push_back(reinterpret_cast<void (*)()>(dlsym(child_handle, attribute->name.c_str())));
   return jit_function_count++;
 }
