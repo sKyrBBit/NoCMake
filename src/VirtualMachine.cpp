@@ -23,20 +23,20 @@ void VirtualMachine::execute(instruction* main) {
   auto pc = main;
   instruction i;
   static void* table[] = {
-    /* 00 */ &&L_NOP,   /* 01 */ &&L_EXIT, /* 02 */ &&L_DEBUG,    /* 03 */ &&L_NOP,
-    /* 04 */ &&L_STORE, /* 05 */ &&L_LOAD, /* 06 */ &&L_PUSH,     /* 07 */ &&L_POP,
-    /* 08 */ &&L_COPY,  /* 09 */ &&L_NOP,  /* 0a */ &&L_SOUT,     /* 0b */ &&L_CASL,
-    /* 0c */ &&L_ADDL,  /* 0d */ &&L_SUBL, /* 0e */ &&L_ANDL,     /* 0f */ &&L_ORL,
+    /* 00 */ &&L_NOP,   /* 01 */ &&L_EXIT, /* 02 */ &&L_DEBUG, /* 03 */ &&L_NOP,
+    /* 04 */ &&L_STORE, /* 05 */ &&L_LOAD, /* 06 */ &&L_PUSH,  /* 07 */ &&L_POP,
+    /* 08 */ &&L_COPY,  /* 09 */ &&L_NOP,  /* 0a */ &&L_SOUT,  /* 0b */ &&L_CASL,
+    /* 0c */ &&L_ADDL,  /* 0d */ &&L_SUBL, /* 0e */ &&L_ANDL,  /* 0f */ &&L_ORL,
 
-    /* 10 */ &&L_ADD,   /* 11 */ &&L_SUB,  /* 12 */ &&L_MUL,      /* 13 */ &&L_DIV,
-    /* 14 */ &&L_GT,    /* 15 */ &&L_GE,   /* 16 */ &&L_LT,       /* 17 */ &&L_LE,
-    /* 18 */ &&L_EQ,    /* 19 */ &&L_AND,  /* 1a */ &&L_OR,       /* 1b */ &&L_NOT,
-    /* 1c */ &&L_CONST, /* 1d */ &&L_NOP,  /* 1e */ &&L_IOUT,     /* 1f */ &&L_IIN,
+    /* 10 */ &&L_ADD,   /* 11 */ &&L_SUB,  /* 12 */ &&L_MUL,   /* 13 */ &&L_DIV,
+    /* 14 */ &&L_GT,    /* 15 */ &&L_GE,   /* 16 */ &&L_LT,    /* 17 */ &&L_LE,
+    /* 18 */ &&L_EQ,    /* 19 */ &&L_AND,  /* 1a */ &&L_OR,    /* 1b */ &&L_NOT,
+    /* 1c */ &&L_CONST, /* 1d */ &&L_NOP,  /* 1e */ &&L_IOUT,  /* 1f */ &&L_IIN,
 
-    /* 20 */ &&L_GOTO,  /* 21 */ &&L_BACK, /* 22 */ &&L_NOP,      /* 23 */ &&L_NOP,
-    /* 24 */ &&L_IFGT,  /* 25 */ &&L_IFGE, /* 26 */ &&L_IFLT,     /* 27 */ &&L_IFLE,
-    /* 28 */ &&L_IFEQ,  /* 29 */ &&L_NEW,  /* 2a */ &&L_SET,      /* 2b */ &&L_GET,
-    /* 2c */ &&L_CALL,  /* 2d */ &&L_RET,  /* 2e */ &&L_NOP, /* 2f */ &&L_NOP,
+    /* 20 */ &&L_GOTO,  /* 21 */ &&L_BACK, /* 22 */ &&L_NOP,   /* 23 */ &&L_NOP,
+    /* 24 */ &&L_IFGT,  /* 25 */ &&L_IFGE, /* 26 */ &&L_IFLT,  /* 27 */ &&L_IFLE,
+    /* 28 */ &&L_IFEQ,  /* 29 */ &&L_NEW,  /* 2a */ &&L_SET,   /* 2b */ &&L_GET,
+    /* 2c */ &&L_CALL,  /* 2d */ &&L_RET,  /* 2e */ &&L_NOP,   /* 2f */ &&L_NOP,
   };
   INIT_DISPATCH {
     CASE(NOP) {
@@ -45,16 +45,16 @@ void VirtualMachine::execute(instruction* main) {
       goto L_END;
     } NEXT;
     CASE(DEBUG) {
-	  // TODO
+    // TODO
       pc++;
       printf("debug | type: %x operand0: %x operand1: %x operand2: %x\n",
         pc->type, pc->operand0, pc->operand1, pc->operand2);
     } NEXT;
     CASE(STORE) {
-      base_pointer[i.operand0] = registers[i.operand1];
+      stack[base_pointer + i.operand0] = registers[i.operand1];
     } NEXT;
     CASE(LOAD) {
-      registers[i.operand0] = base_pointer[i.operand1];
+      registers[i.operand0] = stack[base_pointer + i.operand1];
     } NEXT;
     CASE(PUSH) {
       push(registers[i.operand0]);
@@ -158,7 +158,7 @@ void VirtualMachine::execute(instruction* main) {
       heap.push_back(registers[1]); // TODO back() can be available only if the vector isn't empty.
       auto tmp = &heap.back();
       for (uint32_t u = 0; u < i.operand1; u++) heap.push_back(0u);
-      registers[i.operand0] = *reinterpret_cast<uint32_t*>(++tmp);
+      registers[i.operand0] = *++tmp;
     } NEXT;
     CASE(SET) {
       reinterpret_cast<uint32_t*>(registers[i.operand0])[i.operand1] = registers[i.operand2];
@@ -169,7 +169,7 @@ void VirtualMachine::execute(instruction* main) {
     CASE(CALL) {
       // TODO args
       // base pointer
-      push(*reinterpret_cast<uint32_t*>(&base_pointer));
+      push(base_pointer);
       base_pointer = stack_pointer;
       // locals
       for (uint32_t u = 0u; u < i.operand2; u++) push(0u);
@@ -183,7 +183,7 @@ void VirtualMachine::execute(instruction* main) {
       // locals
       stack_pointer = base_pointer;
       // base pointer
-      base_pointer = reinterpret_cast<uint32_t*>(pop());
+      base_pointer = pop();
     } JUMP;
   } END_DISPATCH;
 }
@@ -219,6 +219,12 @@ inline instruction* VirtualMachine::read_vm_function() {
   auto vm_function_size = read_int();
   DEBUG_OUT_HEX("vm_function size : ", vm_function_size);
   if (vm_function_size == 0u) return nullptr;
+  // auto attribute = new vm_function_attribute;
+  // attribute->type = "void";
+  // attribute->name = read_string();
+  // attribute->size = 0;
+  // attribute->body = nullptr;
+  // attribute->parents = nullptr;
   return reinterpret_cast<instruction*>(read(vm_function_size * 4));
 }
 inline char* VirtualMachine::read_string() {
@@ -238,7 +244,7 @@ inline instruction** VirtualMachine::read_vm_functions() {
   }
   return is_empty
     ? reinterpret_cast<instruction**>(&pointer_placeholder.front())
-	: reinterpret_cast<instruction**>(++tmp);
+    : reinterpret_cast<instruction**>(++tmp);
 }
 inline char** VirtualMachine::read_strings() {
   string_count = read_int();
@@ -251,7 +257,7 @@ inline char** VirtualMachine::read_strings() {
   }
   return is_empty
     ? reinterpret_cast<char**>(&pointer_placeholder.front())
-	: reinterpret_cast<char**>(++tmp);
+    : reinterpret_cast<char**>(++tmp);
 }
 instruction* VirtualMachine::from_WC(string const& file_name) {
   // read `wc` file
@@ -298,11 +304,11 @@ uint32_t VirtualMachine::jit_compile(vm_function_attribute* attribute) {
   fout << "#include <stdio.h>" << endl
        << attribute->type.c_str()
        << " "
-	   << attribute->name.c_str()
-	   << "(void) {"
-	   << endl
-	   << "  long r0, r1, r2, r3, r4, r5, r6, r7, r8;"
-	   << endl;
+       << attribute->name.c_str()
+       << "(void) {"
+       << endl
+       << "  long r0, r1, r2, r3, r4, r5, r6, r7, r8;"
+       << endl;
 
   // direct threading
 #define INIT_DISPATCH JUMP;
@@ -409,9 +415,9 @@ uint32_t VirtualMachine::jit_compile(vm_function_attribute* attribute) {
     } NEXT;
     CASE(CONST) {
       fout << "  __asm volatile(" << endl
-	       << "    \"movq $"  << +i.operand1 << ", %0\\n\"" << endl
-		   << "    : \"=r\"(r" << +i.operand0 << ")" << endl
-		   << "  );" << endl;
+           << "    \"movq $"  << +i.operand1 << ", %0\\n\"" << endl
+           << "    : \"=r\"(r" << +i.operand0 << ")" << endl
+           << "  );" << endl;
     } NEXT;
     CASE(IOUT) {
       fout << "  printf(\"%ld\", r" << +i.operand0 << ");" << endl;
@@ -481,16 +487,16 @@ uint32_t VirtualMachine::jit_compile(vm_function_attribute* attribute) {
   child_path += ".so";
   auto child_handle = dlopen(child_path.c_str(), RTLD_LAZY);
   if (attribute->parents != nullptr) {
- // import parents
- for (uint32_t u = 0u; attribute->parents[u] != nullptr; u++) {
-	  auto parent = attribute->parents[u];
-	  // open parent
-	  auto parent_path = string("tmp/");
-	  parent_path += parent->name;
-	  parent_path += ".so";
-	  auto parent_handle = dlopen(parent_path.c_str(), RTLD_LAZY);
-	  import_function(parent_handle, child_handle, parent->name);
- }
+  // import parents
+  for (uint32_t u = 0u; attribute->parents[u] != nullptr; u++) {
+    auto parent = attribute->parents[u];
+    // open parent
+    auto parent_path = string("tmp/");
+    parent_path += parent->name;
+    parent_path += ".so";
+    auto parent_handle = dlopen(parent_path.c_str(), RTLD_LAZY);
+    import_function(parent_handle, child_handle, parent->name);
+  }
   }
   jit_functions.push_back(reinterpret_cast<void (*)()>(dlsym(child_handle, attribute->name.c_str())));
   return jit_function_count++;

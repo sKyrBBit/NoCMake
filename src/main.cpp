@@ -194,6 +194,26 @@ void test3() {
   auto elapsed3 = chrono::duration_cast<chrono::milliseconds>(end3-start3).count();
   printf("\ntime %ld[ms]\n", elapsed3);
 }
+void test4() {
+  auto vm = new VirtualMachine;
+  // write test4
+  ofstream fout("tmp/test4.wc", ios::in | ios::binary);
+  write_int(0xdeadbeefu); // magic
+  write_int(0x00000002u); // function_size: 2
+  write_ins("new", 0, 0, 0);  // r0 = new[0]
+  write_ins("exit", 0, 0, 0); // exit
+  write_int(0x00000000u); // method_count: 0
+  write_int(0x00000000u); // string_count: 0
+  fout.close();
+  // read test3
+  auto main4 = vm->from_WC("tmp/test4");
+  // execute test3
+  auto start4 = chrono::system_clock::now();
+  vm->execute(main4);
+  auto end4 = chrono::system_clock::now();
+  auto elapsed4 = chrono::duration_cast<chrono::milliseconds>(end4-start4).count();
+  printf("\ntime %ld[ms]\n", elapsed4);
+}
 
 int main() {
   test1();
@@ -201,6 +221,8 @@ int main() {
   test2();
   cout << endl;
   test3();
+  cout << endl;
+  test4();
   cout << endl;
   return 0;
 }

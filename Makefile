@@ -4,6 +4,7 @@ run: build
 	@touch tmp/test1.wc
 	@touch tmp/test2.wc
 	@touch tmp/test3.wc
+	@touch tmp/test4.wc
 	@./tgt/a.out
 
 .PHONY: build
