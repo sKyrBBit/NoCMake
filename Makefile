@@ -3,6 +3,7 @@ run: build
 	@mkdir -p tmp
 	@touch tmp/test1.wc
 	@touch tmp/test2.wc
+	@touch tmp/test3.wc
 	@./tgt/a.out
 
 .PHONY: build

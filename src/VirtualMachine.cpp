@@ -36,7 +36,7 @@ void VirtualMachine::execute(instruction* main) {
     /* 20 */ &&L_GOTO,  /* 21 */ &&L_BACK, /* 22 */ &&L_NOP,      /* 23 */ &&L_NOP,
     /* 24 */ &&L_IFGT,  /* 25 */ &&L_IFGE, /* 26 */ &&L_IFLT,     /* 27 */ &&L_IFLE,
     /* 28 */ &&L_IFEQ,  /* 29 */ &&L_NEW,  /* 2a */ &&L_SET,      /* 2b */ &&L_GET,
-    /* 2c */ &&L_CALL,  /* 2d */ &&L_RET,  /* 2e */ &&L_PROLOGUE, /* 2f */ &&L_EPILOGUE,
+    /* 2c */ &&L_CALL,  /* 2d */ &&L_RET,  /* 2e */ &&L_NOP, /* 2f */ &&L_NOP,
   };
   INIT_DISPATCH {
     CASE(NOP) {
@@ -167,17 +167,24 @@ void VirtualMachine::execute(instruction* main) {
       registers[i.operand0] = reinterpret_cast<uint32_t*>(registers[i.operand1])[i.operand2];
     } NEXT;
     CASE(CALL) {
-      // TODO
+      // TODO args
+      // base pointer
+      push(*reinterpret_cast<uint32_t*>(&base_pointer));
+      base_pointer = stack_pointer;
+      // locals
+      for (uint32_t u = 0u; u < i.operand2; u++) push(0u);
+      // return address
+      push(*reinterpret_cast<uint32_t*>(&++pc));
+      pc = vm_functions[i.operand1];
     } JUMP;
     CASE(RET) {
-      // TODO
+      // return address
+      pc = reinterpret_cast<instruction*>(pop());
+      // locals
+      stack_pointer = base_pointer;
+      // base pointer
+      base_pointer = reinterpret_cast<uint32_t*>(pop());
     } JUMP;
-    CASE(PROLOGUE) {
-      // TODO
-    } NEXT;
-    CASE(EPILOGUE) {
-      // TODO
-    } NEXT;
   } END_DISPATCH;
 }
 #undef INIT_DISPATCH

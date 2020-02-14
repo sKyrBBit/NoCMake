@@ -6,14 +6,14 @@
 class VirtualMachine {
 public:
   VirtualMachine() {
-    this->stack = vector<uint32_t>();
+    this->stack = vector<uint32_t>(1);
     this->heap = vector<uint32_t>();
     this->registers = vector<uint32_t>(32);
     this->vm_functions = nullptr;
 	this->jit_functions = vector<void(*)()>();
 	this->strings = nullptr;
     this->stack_pointer = &stack.front();
-    this->base_pointer = nullptr;
+    this->base_pointer = stack_pointer;
 	// debug
 	this->vm_function_count = 0u;
 	this->vm_function_attributes = vector<vm_function_attribute>();
