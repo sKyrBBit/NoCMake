@@ -13,14 +13,14 @@ inline uint32_t VirtualMachine::pop() {
   stack_pointer--;
   return tmp;
 }
-void VirtualMachine::execute(instruction* main) {
+void VirtualMachine::execute(uint32_t main) {
   // direct threading
 #define INIT_DISPATCH JUMP;
 #define CASE(op) L_ ## op:
 #define NEXT i=*++pc; goto *table[i.type]
 #define JUMP i=*pc; goto *table[i.type]
 #define END_DISPATCH L_END:
-  auto pc = main;
+  auto pc = reinterpret_cast<instruction*>(&value_placeholder[index_placeholder[main]]);
   instruction i;
   static void* table[] = {
     /* 00 */ &&L_NOP,   /* 01 */ &&L_EXIT, /* 02 */ &&L_DEBUG, /* 03 */ &&L_NOP,
@@ -66,7 +66,7 @@ void VirtualMachine::execute(instruction* main) {
       registers[i.operand0] = registers[i.operand1];
     } NEXT;
     CASE(SOUT) {
-      cout << strings[i.operand0];
+      cout << reinterpret_cast<char*>(&value_placeholder[index_placeholder[strings + i.operand0]]);
     } NEXT;
     CASE(CASL) {
       __sync_bool_compare_and_swap(&registers[i.operand0], registers[i.operand1], registers[i.operand2]);
@@ -175,7 +175,7 @@ void VirtualMachine::execute(instruction* main) {
       for (uint32_t u = 0u; u < i.operand2; u++) push(0u);
       // return address
       push(*reinterpret_cast<uint32_t*>(&++pc));
-      pc = vm_functions[i.operand1];
+      pc = reinterpret_cast<instruction*>(&value_placeholder[index_placeholder[vm_functions + i.operand1]]);
     } JUMP;
     CASE(RET) {
       // return address
@@ -207,65 +207,61 @@ void VirtualMachine::execute(instruction* main) {
 
 #endif
 
-inline uint8_t* VirtualMachine::read(uint32_t size) {
-  auto tmp = &value_placeholder[index];
-  index += size;
+inline uint32_t VirtualMachine::read(uint32_t size) {
+  auto tmp = value_index;
+  value_index += size;
   return tmp;
 }
 inline uint32_t VirtualMachine::read_int() {
-  return *reinterpret_cast<uint32_t*>(read(4));
+  auto tmp = &value_placeholder[value_index];
+  value_index += 4;
+  return *reinterpret_cast<uint32_t*>(tmp);
 }
-inline instruction* VirtualMachine::read_vm_function() {
+inline uint32_t VirtualMachine::read_vm_function() {
   auto vm_function_size = read_int();
   DEBUG_OUT_HEX("vm_function size : ", vm_function_size);
-  if (vm_function_size == 0u) return nullptr;
+  if (vm_function_size == 0u) return 0;
   // auto attribute = new vm_function_attribute;
   // attribute->type = "void";
   // attribute->name = read_string();
   // attribute->size = 0;
   // attribute->body = nullptr;
   // attribute->parents = nullptr;
-  return reinterpret_cast<instruction*>(read(vm_function_size * 4));
+  return read(vm_function_size * 4);
 }
-inline char* VirtualMachine::read_string() {
+inline uint32_t VirtualMachine::read_string() {
   auto string_size = read_int();
   DEBUG_OUT_HEX("string size : ", string_size);
-  if (string_size == 0u) return nullptr;
-  return reinterpret_cast<char*>(read(string_size));
+  if (string_size == 0u) return 0;
+  return read(string_size);
 }
-inline instruction** VirtualMachine::read_vm_functions() {
+inline uint32_t VirtualMachine::read_vm_functions() {
   vm_function_count = read_int();
   DEBUG_OUT_HEX("vm_function count : ", vm_function_count);
-  if (vm_function_count == 0) return nullptr;
-  auto is_empty = pointer_placeholder.empty(); // TODO back() can be available only if the vector isn't empty.
-  auto tmp = &pointer_placeholder.back();
+  if (vm_function_count == 0) return 0;
+  auto tmp = index_index;
   for (uint32_t i = 0u; i < vm_function_count; i++) {
-    pointer_placeholder.push_back(reinterpret_cast<uint32_t*>(read_vm_function()));
+    index_placeholder.push_back(read_vm_function());
+    index_index++;
   }
-  return is_empty
-    ? reinterpret_cast<instruction**>(&pointer_placeholder.front())
-    : reinterpret_cast<instruction**>(++tmp);
+  return tmp;
 }
-inline char** VirtualMachine::read_strings() {
+inline uint32_t VirtualMachine::read_strings() {
   string_count = read_int();
   DEBUG_OUT_HEX("string count : ", string_count);
-  if (string_count == 0u) return nullptr;
-  auto is_empty = pointer_placeholder.empty(); // TODO back() can be available only if the vector isn't empty.
-  auto tmp = &pointer_placeholder.back();
+  if (string_count == 0u) return 0;
+  auto tmp = index_index;
   for (uint32_t i = 0u; i < string_count; i++) {
-    pointer_placeholder.push_back(reinterpret_cast<uint32_t*>(read_string()));
+    index_placeholder.push_back(read_string());
+    index_index++;
   }
-  return is_empty
-    ? reinterpret_cast<char**>(&pointer_placeholder.front())
-    : reinterpret_cast<char**>(++tmp);
+  return tmp;
 }
-instruction* VirtualMachine::from_WC(string const& file_name) {
+uint32_t VirtualMachine::from_WC(string const& file_name, bool is_main) {
   // read `wc` file
-  value_placeholder.clear(); // TODO remove
-  index = 0u;
   string wc = string(file_name);
   wc += ".wc";
-  ifstream fin(wc.c_str(), ios::in | ios::binary);
+  ifstream fin(wc.c_str(), ios::binary);
   if (!fin) {
     cout << "error | file `" << wc.c_str() << "` didn't open" << endl;
     exit(1);
@@ -277,7 +273,7 @@ instruction* VirtualMachine::from_WC(string const& file_name) {
   if (magic != 0xdeadbeef) {
     cout << "error | file `" << wc.c_str() << "` is invalid" << endl;
     fin.close();
-    return nullptr;
+    return 0;
   }
   while (!fin.eof()) {
     uint8_t buffer = 0;
@@ -285,12 +281,19 @@ instruction* VirtualMachine::from_WC(string const& file_name) {
     value_placeholder.push_back(buffer);
   }
   fin.close();
-  
+
   // load wc into memory
-  auto main = read_vm_function();
-  vm_functions = read_vm_functions();
-  strings = read_strings();
-  return main;
+  if (is_main) {
+    auto main = read_vm_function();
+    vm_functions = read_vm_functions();
+    strings = read_strings();
+    return main;
+  } else {
+    read_vm_function();
+    read_vm_functions();
+    read_strings();
+    return 0;
+  }
 }
 
 #undef DEBUG_OUT
@@ -360,7 +363,7 @@ uint32_t VirtualMachine::jit_compile(vm_function_attribute* attribute) {
       fout << "  r" << +i.operand0 << " = r" << +i.operand1 << ";" << endl;
     } NEXT;
     CASE(SOUT) {
-      fout << "  printf(\"" << strings[i.operand0] << "\");" << endl;
+      fout << "  printf(\"" << reinterpret_cast<char*>(&value_placeholder[index_placeholder[strings + i.operand0]]) << "\");" << endl;
     } NEXT;
     CASE(CASL) {
       fout << "  __sync_bool_compare_and_swap(&r" << +i.operand0 << ", r" << +i.operand1 << ", r[i.operand2]);" << endl;
