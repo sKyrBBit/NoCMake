@@ -11,7 +11,7 @@ run: build
 .PHONY: build
 build: src/main.cpp src/VirtualMachine.cpp
 	@mkdir -p tgt
-	@clang++ src/main.cpp src/VirtualMachine.cpp -o tgt/a.out -g -Wall -ldl
+	@clang++ src/main.cpp src/VirtualMachine.cpp src/JITCompiler.cpp src/Converter.cpp -o tgt/a.out -g -Wall -ldl
 
 .PHONY: clean
 clean:

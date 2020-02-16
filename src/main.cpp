@@ -1,8 +1,7 @@
 #include "rcwt.h"
 #include "VirtualMachine.h"
 #include <chrono>
-
-using namespace std;
+#include <unordered_map>
 
 void environment() {
 #if defined(__LITTLE_ENDIAN__)
@@ -43,49 +42,50 @@ void dump(void* target, uint32_t size) {
 
 
 uint32_t gen(string const& type, uint8_t operand0, uint8_t operand1, uint8_t operand2) {
-  uint8_t tmp;
-  if (type == "nop" || type == "NOP")     tmp = 0x0u;
-  if (type == "exit" || type == "EXIT")   tmp = 0x1u;
-  if (type == "debug" || type == "DEBUG") tmp = 0x2u;
-  if (type == "store" || type == "STORE") tmp = 0x4u;
-  if (type == "load" || type == "LOAD")   tmp = 0x5u;
-  if (type == "push" || type == "PUSH")   tmp = 0x6u;
-  if (type == "pop" || type == "POP")     tmp = 0x7u;
-  if (type == "copy" || type == "COPY")   tmp = 0x8u;
-  if (type == "sout" || type == "SOUT")   tmp = 0xau;
-  if (type == "casl" || type == "CASL")   tmp = 0xbu;
-  if (type == "addl" || type == "ADDL")   tmp = 0xcu;
-  if (type == "subl" || type == "SUBL")   tmp = 0xdu;
-  if (type == "andl" || type == "ANDL")   tmp = 0xeu;
-  if (type == "orl" || type == "ORL")     tmp = 0xfu;
-  if (type == "add" || type == "ADD")     tmp = 0x10u;
-  if (type == "sub" || type == "SUB")     tmp = 0x11u;
-  if (type == "mul" || type == "MUL")     tmp = 0x12u;
-  if (type == "div" || type == "DIV")     tmp = 0x13u;
-  if (type == "gt" || type == "GT")       tmp = 0x14u;
-  if (type == "ge" || type == "GE")       tmp = 0x15u;
-  if (type == "lt" || type == "LT")       tmp = 0x16u;
-  if (type == "le" || type == "LE")       tmp = 0x17u;
-  if (type == "eq" || type == "EQ")       tmp = 0x18u;
-  if (type == "and" || type == "AND")     tmp = 0x19u;
-  if (type == "or" || type == "OR")       tmp = 0x1au;
-  if (type == "not" || type == "NOT")     tmp = 0x1bu;
-  if (type == "const" || type == "CONST") tmp = 0x1cu;
-  if (type == "iout" || type == "IOUT")   tmp = 0x1eu;
-  if (type == "iin" || type == "IIN")     tmp = 0x1fu;
-  if (type == "goto" || type == "GOTO")   tmp = 0x20u;
-  if (type == "back" || type == "BACK")   tmp = 0x21u;
-  if (type == "ifgt" || type == "IFGT")   tmp = 0x24u;
-  if (type == "ifge" || type == "FIGE")   tmp = 0x25u;
-  if (type == "iflt" || type == "IFLT")   tmp = 0x26u;
-  if (type == "ifle" || type == "IFLE")   tmp = 0x27u;
-  if (type == "ifeq" || type == "IFEQ")   tmp = 0x28u;
-  if (type == "new" || type == "NEW")     tmp = 0x29u;
-  if (type == "set" || type == "SET")     tmp = 0x2au;
-  if (type == "get" || type == "GET")     tmp = 0x2bu;
-  if (type == "call" || type == "CALL")   tmp = 0x2cu;
-  if (type == "ret" || type == "RET")     tmp = 0x2du;
-  return (tmp << 24) + (operand0 << 16) + (operand1 << 8) + operand2;
+  unordered_map<string, uint8_t> str2ins = {
+    {"nop",   0x00u}, {"NOP",   0x00u},
+    {"exit",  0x01u}, {"EXIT",  0x01u},
+    {"debug", 0x02u}, {"DEBUG", 0x02u},
+    {"store", 0x04u}, {"STORE", 0x04u},
+    {"load",  0x05u}, {"LOAD",  0x05u},
+    {"push",  0x06u}, {"PUSH",  0x06u},
+    {"pop",   0x07u}, {"POP",   0x07u},
+    {"copy",  0x08u}, {"COPY",  0x08u},
+    {"sout",  0x0au}, {"SOUT",  0x0au},
+    {"casl",  0x0bu}, {"CASL",  0x0bu},
+    {"addl",  0x0cu}, {"ADDL",  0x0cu},
+    {"subl",  0x0du}, {"SUBL",  0x0du},
+    {"andl",  0x0eu}, {"ANDL",  0x0eu},
+    {"orl",   0x0fu}, {"ORL",   0x0fu},
+    {"add",   0x10u}, {"ADD",   0x10u},
+    {"sub",   0x11u}, {"SUB",   0x11u},
+    {"mul",   0x12u}, {"MUL",   0x12u},
+    {"div",   0x13u}, {"DIV",   0x13u},
+    {"gt",    0x14u}, {"GT",    0x14u},
+    {"ge",    0x15u}, {"GE",    0x15u},
+    {"lt",    0x16u}, {"LT",    0x16u},
+    {"le",    0x17u}, {"LE",    0x17u},
+    {"eq",    0x18u}, {"EQ",    0x18u},
+    {"and",   0x19u}, {"AND",   0x19u},
+    {"or",    0x1au}, {"OR",    0x1au},
+    {"not",   0x1bu}, {"NOT",   0x1bu},
+    {"const", 0x1cu}, {"CONST", 0x1cu},
+    {"iout",  0x1eu}, {"IOUT",  0x1eu},
+    {"iin",   0x1fu}, {"IIN",   0x1fu},
+    {"goto",  0x20u}, {"GOTO",  0x20u},
+    {"back",  0x21u}, {"BACK",  0x21u},
+    {"ifgt",  0x24u}, {"IFGT",  0x24u},
+    {"ifge",  0x25u}, {"FIGE",  0x25u},
+    {"iflt",  0x26u}, {"IFLT",  0x26u},
+    {"ifle",  0x27u}, {"IFLE",  0x27u},
+    {"ifeq",  0x28u}, {"IFEQ",  0x28u},
+    {"new",   0x29u}, {"NEW",   0x29u},
+    {"set",   0x2au}, {"SET",   0x2au},
+    {"get",   0x2bu}, {"GET",   0x2bu},
+    {"call",  0x2cu}, {"CALL",  0x2cu},
+    {"ret",   0x2du}, {"RET",   0x2du}
+  };
+  return (str2ins[type] << 24) + (operand0 << 16) + (operand1 << 8) + operand2;
 }
 
 uint32_t ti;
