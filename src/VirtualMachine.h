@@ -14,11 +14,11 @@ public:
     this->strings = 0u;
     this->stack_pointer = 0u;
     this->base_pointer = 0u;
-    // debug
+    // debugger
     this->vm_function_count = 0u;
     this->vm_function_attributes = vector<vm_function_attribute>();
     this->string_count = 0u;
-    // converter
+    // converter.cpp
     this->index_placeholder = vector<uint32_t>(); index_placeholder.reserve(32);
     this->value_placeholder = vector<uint8_t>(); value_placeholder.reserve(32);
     this->value_index = 0u;
@@ -26,7 +26,7 @@ public:
   }
   void execute(uint32_t);
   uint32_t from_WC(string const&, bool);
-  // JIT compiler
+  // jit_compiler.cpp
   uint32_t jit_compile(vm_function_attribute*);
   void jit_execute(uint32_t);
 
@@ -41,12 +41,12 @@ private:
   uint32_t base_pointer;
   void push(uint32_t);
   uint32_t pop();
-  // debuger
+  // debugger
   uint32_t vm_function_count;
   uint32_t jit_function_count;
   vector<vm_function_attribute> vm_function_attributes;
   uint32_t string_count;
-  // converter
+  // converter.cpp
   vector<uint32_t> index_placeholder;
   vector<uint8_t> value_placeholder;
   uint32_t value_index;
@@ -57,7 +57,7 @@ private:
   uint32_t read_vm_functions();
   uint32_t read_string();
   uint32_t read_strings();
-  // JIT compiler
+  // jit_compiler.cpp
   void import_function(void*, void*, string const&); // unsafe
 };
 

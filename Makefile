@@ -9,9 +9,9 @@ run: build
 	@./tgt/a.out
 
 .PHONY: build
-build: src/main.cpp src/VirtualMachine.cpp
+build: src/main.cpp src/VirtualMachine.cpp src/jit_compiler.cpp src/converter.cpp src/error.cpp
 	@mkdir -p tgt
-	@clang++ src/main.cpp src/VirtualMachine.cpp src/JITCompiler.cpp src/Converter.cpp -o tgt/a.out -g -Wall -ldl
+	@clang++ src/main.cpp src/VirtualMachine.cpp src/jit_compiler.cpp src/converter.cpp src/error.cpp -o tgt/a.out -g -Wall -ldl
 
 .PHONY: clean
 clean:

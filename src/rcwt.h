@@ -10,8 +10,13 @@
 
 using namespace std;
 
+// main.cpp
 void environment();
 void dump(void*, uint32_t);
+// error.cpp
+void error(string const&);
+void file_not_found(string const&);
+void file_invalid(string const&);
 
 #if defined(__LITTLE_ENDIAN__)
 struct instruction {

@@ -66,15 +66,15 @@ uint32_t VirtualMachine::from_WC(string const& file_name, bool is_main) {
   wc += ".wc";
   ifstream fin(wc.c_str(), ios::binary);
   if (!fin) {
-    cout << "error | file `" << wc.c_str() << "` didn't open" << endl;
-    exit(1);
+    file_not_found(wc);
+    return 0;
   }
   // check if magic is valid or not
   uint32_t magic = 0u;
   fin.read(reinterpret_cast<char*>(&magic), 4);
   DEBUG_OUT_HEX("magic : ", magic);
   if (magic != 0xdeadbeef) {
-    cout << "error | file `" << wc.c_str() << "` is invalid" << endl;
+    file_invalid(wc);
     fin.close();
     return 0;
   }

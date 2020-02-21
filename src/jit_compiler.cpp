@@ -175,6 +175,11 @@ uint32_t VirtualMachine::jit_compile(vm_function_attribute* attribute) {
       // TODO
     } NEXT;
   } END_DISPATCH;
+#undef INIT_DISPATCH
+#undef CASE
+#undef NEXT
+#undef JUMP
+#undef END_DISPATCH
 
   fout << "}" << endl;
 
