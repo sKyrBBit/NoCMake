@@ -1,17 +1,26 @@
+ARG=default
+
 .PHONY: run
 run: build
-	@mkdir -p tmp
-	@touch tmp/test1.wc
-	@touch tmp/test2.wc
-	@touch tmp/test3.wc
-	@touch tmp/test4a.wc
-	@touch tmp/test4b.wc
-	@./tgt/a.out
+	@./tgt/rcwt ${ARG}
+
+.PHONY: check
+check: src/test.cpp
+	@touch tmp/_test1.wc
+	@touch tmp/_test2.wc
+	@touch tmp/_test3.wc
+	@touch tmp/_test4a.wc
+	@touch tmp/_test4b.wc
+	@touch tmp/_test5.ll
+	@clang++ src/test.cpp -o tgt/test -g -Wall
+	@./tgt/test
 
 .PHONY: build
-build: src/main.cpp src/VirtualMachine.cpp src/jit_compiler.cpp src/converter.cpp src/error.cpp
+build: src/main.cpp src/VirtualMachine.cpp src/jit_compiler.cpp src/converter.cpp src/error.cpp src/ll.cpp
+	@mkdir -p tmp
 	@mkdir -p tgt
-	@clang++ src/main.cpp src/VirtualMachine.cpp src/jit_compiler.cpp src/converter.cpp src/error.cpp -o tgt/a.out -g -Wall -ldl
+	@make check
+	@clang++ src/main.cpp src/VirtualMachine.cpp src/jit_compiler.cpp src/converter.cpp src/error.cpp src/ll.cpp -o tgt/rcwt -g -Wall -ldl
 
 .PHONY: clean
 clean:

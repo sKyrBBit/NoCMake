@@ -23,14 +23,20 @@ public:
     this->value_placeholder = vector<uint8_t>(); value_placeholder.reserve(32);
     this->value_index = 0u;
     this->index_index = 0u;
+	// ll.cpp
+	symbols = std::vector<symbol*>(); symbols.reserve(32);
+    relocations = std::vector<relocation*>(); relocations.reserve(32);
   }
-  void execute(uint32_t);
+  void execute();
   uint32_t from_WC(string const&, bool);
   // jit_compiler.cpp
   uint32_t jit_compile(vm_function_attribute*);
   void jit_execute(uint32_t);
+  // ll.cpp
+  void load(std::string const&);
 
 private:
+  uint32_t entry_point;
   vector<uint32_t> stack;
   vector<uint32_t> heap;
   vector<uint32_t> registers;
@@ -59,6 +65,15 @@ private:
   uint32_t read_strings();
   // jit_compiler.cpp
   void import_function(void*, void*, string const&); // unsafe
+  // ll.cpp
+  std::vector<symbol*> symbols;
+  std::vector<relocation*> relocations;
+  void initialize();
+  void get(std::string const&);
+  void setup();
+  void link();
+  void relocate(uint32_t);
+  void resolve();
 };
 
 #endif

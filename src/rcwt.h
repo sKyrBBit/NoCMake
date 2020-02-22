@@ -40,5 +40,17 @@ struct vm_function_attribute {
   instruction* body;
   vm_function_attribute** parents;
 };
+struct symbol {
+  string symbol_name;
+  bool defined;
+// defined == true
+  uint32_t base_address;
+// defined == false
+  string module_name;
+};
+struct relocation {
+  uint32_t base_address;
+  string symbol_name;
+};
 
 #endif

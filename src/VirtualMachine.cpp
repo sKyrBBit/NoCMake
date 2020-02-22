@@ -12,14 +12,14 @@ inline uint32_t VirtualMachine::pop() {
   stack_pointer--;
   return tmp;
 }
-void VirtualMachine::execute(uint32_t main) {
+void VirtualMachine::execute() {
   // direct threading
 #define INIT_DISPATCH JUMP;
 #define CASE(op) L_ ## op:
 #define NEXT i=*++pc; goto *table[i.type]
 #define JUMP i=*pc; goto *table[i.type]
 #define END_DISPATCH L_END:
-  auto pc = reinterpret_cast<instruction*>(&value_placeholder[index_placeholder[main]]);
+  auto pc = reinterpret_cast<instruction*>(&value_placeholder[entry_point]);
   instruction i;
   static void* table[] = {
     /* 00 */ &&L_NOP,   /* 01 */ &&L_EXIT, /* 02 */ &&L_DEBUG, /* 03 */ &&L_NOP,
