@@ -11,8 +11,8 @@ check: src/test.cpp
 	@touch tmp/_test1.wc
 	@touch tmp/_test2.wc
 	@touch tmp/_test3.wc
-	@touch tmp/_test4a.wc
-	@touch tmp/_test4b.wc
+	@touch tmp/_test4a.ll
+	@touch tmp/_test4b.ll
 	@touch tmp/_test5.ll
 	@clang++ src/test.cpp -o tgt/test -g -Wall
 	@./tgt/test

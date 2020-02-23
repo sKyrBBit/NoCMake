@@ -33,7 +33,7 @@ public:
   uint32_t jit_compile(vm_function_attribute*);
   void jit_execute(uint32_t);
   // ll.cpp
-  void load(std::string const&);
+  void from_LL(string const&);
 
 private:
   uint32_t entry_point;
@@ -69,11 +69,11 @@ private:
   std::vector<symbol*> symbols;
   std::vector<relocation*> relocations;
   void initialize();
-  void get(std::string const&);
+  void load(string const&);
   void setup();
   void link();
-  void relocate(uint32_t);
-  void resolve();
+  void relocate(uint32_t, uint32_t, uint32_t);
+  symbol* find_symbol(string const&);
 };
 
 #endif

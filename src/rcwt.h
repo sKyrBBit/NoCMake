@@ -17,6 +17,7 @@ void dump(void*, uint32_t);
 void error(string const&);
 void file_not_found(string const&);
 void file_invalid(string const&);
+void symbol_not_found(string const&);
 
 struct instruction {
   uint8_t type;

@@ -14,14 +14,13 @@ void VirtualMachine::initialize() {
 #undef FILL_NULL
 #undef FILL_ZERO
 }
-void VirtualMachine::load(string const& target) {
+void VirtualMachine::from_LL(string const& target) {
   initialize();
-  get(target);
+  load(target);
   setup();
 }
-void VirtualMachine::get(string const& target) { // TODO simplify
-  auto offset = symbols.size();
-  ifstream fin(target, ios::binary);
+void VirtualMachine::load(string const& target) { // TODO simplify
+  ifstream fin(target + ".ll", ios::binary);
   if (!fin) file_not_found(target);
 
 #ifdef ON_DEBUG
@@ -40,10 +39,14 @@ void VirtualMachine::get(string const& target) { // TODO simplify
   uint32_t magic;
   READ_INT(magic);
   if (magic != 0x52435754) { // "RCWT"
-    file_not_found(target);
+    file_invalid(target + ".ll");
     fin.close();
     return;
   }
+  // save vector counts for relocation
+  auto symbol_begin = symbols.size();
+  auto relocation_begin = relocations.size();
+  auto offset = value_placeholder.size();
 
   uint32_t symbol_count;
   READ_INT(symbol_count);
@@ -100,10 +103,13 @@ void VirtualMachine::get(string const& target) { // TODO simplify
    	fin.read(reinterpret_cast<char*>(&tmp), 1);
    	value_placeholder.push_back(tmp);
   }
+  if (relocation_count > 0) { // TODO
+	relocate(symbol_begin, relocation_begin, offset);
+	link();
+  }
 
 #undef DEBUG_OUT_HEX
 #undef READ_INT 
-
 }
 void VirtualMachine::setup() {
   for (symbol* s : symbols) {
@@ -112,21 +118,33 @@ void VirtualMachine::setup() {
 	  break;
 	}
   }
+  // TODO? symbols -> index_placeholder
 }
-void VirtualMachine::link() {
-	// get();
-	// relocate();
-	// resolve();
+void VirtualMachine::link() { // TODO check
+  for (relocation* tmpr : relocations) {
+    auto tmps = find_symbol(tmpr->symbol_name);
+    if (!tmps->defined) {
+	  // TODO remove
+	  tmps->symbol_name = ""; tmps->defined = true;
+  	  load(tmps->module_name);
+	  // resolve
+	  value_placeholder[tmpr->base_address] = find_symbol(tmpr->symbol_name)->base_address;
+    } else {
+      // resolve
+	  value_placeholder[tmpr->base_address] = tmps->base_address;
+	}
+  }
 }
-void VirtualMachine::relocate(uint32_t offset) {
-  for (uint32_t u = offset; u < symbols.size(); u++) {
+void VirtualMachine::relocate(uint32_t symbol_begin, uint32_t relocation_begin, uint32_t offset) {
+  for (uint32_t u = symbol_begin; u < symbols.size(); u++) {
 	if (symbols[u]->defined) symbols[u]->base_address += offset;
   }
-}
-void VirtualMachine::resolve() {
-  for (relocation* r : relocations) {
-    symbol* s /* = find_symbol(symbols, r->symbol_name) */ ;
-    if (!s->defined) load(s->module_name);
-    value_placeholder[r->base_address] = s->base_address;
+  for (uint32_t u = relocation_begin; u < relocations.size(); u++) {
+	relocations[u]->base_address += offset;
   }
+}
+inline symbol* VirtualMachine::find_symbol(string const& name) {
+  for (symbol* s : symbols) if (s->symbol_name == name) return s;
+  symbol_not_found(name);
+  exit(1);
 }

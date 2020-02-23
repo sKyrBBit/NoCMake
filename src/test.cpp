@@ -132,25 +132,47 @@ void test3() {
 }
 void test4() {
   // write test4a
-  ofstream fout("tmp/_test4a.wc", ios::binary);
-  write_int(0xdeadbeefu); // magic
-  write_int(0x00000002u); // function_size: 2
+  ofstream fout("tmp/_test4a.ll", ios::binary);
+  write_int(0x52435754u);    // magic
+  write_int(0x00000002u);    // symbol_count
+  write_int(0x00000001u);    // relocation_count
+  write_int(0x00000008u);    // data_size
+  write_int(0x00000004u);
+  write_str("main");         // symbol_name
+  write_int(0x00000001u);    // defined
+  write_int(0x00000000u);    // base_address
+  write_int(0x00000002u);
+  write_str("f0");           // symbol_name
+  write_int(0x00000000u);    // defined
+  write_int(0x0000000bu);
+  write_str("tmp/_test4b");  // module_name
+  write_int(0x00000002u);    // base_address
+  write_int(0x00000002u);
+  write_str("f0");           // symbol_name
   write_ins("call", 0, 0, 0); // call 0 0 0
   write_ins("exit", 0, 0, 0); // exit
-  write_int(0x00000000u); // method_count: 0
-  write_int(0x00000001u); // string_count: 1
-  write_int(0x00000006u); // string_size: 6
-  write_str("test4");
   fout.close();
   // write test4b
-  fout.open("tmp/_test4b.wc", ios::binary);
-  write_int(0xdeadbeefu); // magic
-  write_int(0x00000000u); // function_size: 0
-  write_int(0x00000001u); // method_count: 1
-  write_int(0x00000002u); // function_size: 2
-  write_ins("sout", 0, 0, 0); // out s0
+  fout.open("tmp/_test4b.ll", ios::binary);
+  write_int(0x52435754u);    // magic
+  write_int(0x00000002u);    // symbol_count
+  write_int(0x00000001u);    // relocation_count
+  write_int(0x00000016u);    // data_size
+  write_int(0x00000002u);
+  write_str("f0");           // symbol_name
+  write_int(0x00000001u);    // defined
+  write_int(0x00000000u);    // base_address
+  write_int(0x00000002u);
+  write_str("s0");           // symbol_name
+  write_int(0x00000001u);    // defined
+  write_int(0x00000008u);    // base_address
+  write_int(0x00000001u);    // base_address
+  write_int(0x00000002u);
+  write_str("s0");           // symbol_name
+  write_ins("sout", 8, 0, 0); // out s0
   write_ins("exit", 0, 0, 0); // exit
-  write_int(0x00000000u); // string_count: 0
+  write_str("Hello, World!");
+  write_int(0x00000000u);
   fout.close();
 }
 
@@ -159,7 +181,7 @@ void test5() {
   write_int(0x52435754u);    // magic
   write_int(0x00000002u);    // symbol_count
   write_int(0x00000000u);    // relocation_count
-  write_int(0x00000015u);    // data_size
+  write_int(0x0000000cu);    // data_size
   write_int(0x00000004u);
   write_str("main");         // symbol_name
   write_int(0x00000001u);    // defined
@@ -171,7 +193,6 @@ void test5() {
   write_ins("const", 0, 100, 0);
   write_ins("iout", 0, 0, 0);
   write_ins("exit", 0, 0, 0);
-  write_str("Hello, World!");
   fout.close();
 }
 

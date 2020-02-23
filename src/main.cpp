@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 	cout << "usage | make ARG=[file]" << endl;
   } else {
     auto vm = new VirtualMachine;
-    vm->load(string(argv[1]));
+    vm->from_LL(string(argv[1]));
     vm->execute();
   }
   return 0;

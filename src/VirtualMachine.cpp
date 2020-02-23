@@ -68,7 +68,7 @@ void VirtualMachine::execute() {
       registers[i.operand0] = registers[i.operand1];
     } NEXT;
     CASE(SOUT) {
-      cout << reinterpret_cast<char*>(&value_placeholder[index_placeholder[strings + i.operand0]]);
+      cout << reinterpret_cast<char*>(&value_placeholder[i.operand0]);
     } NEXT;
     CASE(CASL) {
       __sync_bool_compare_and_swap(&registers[i.operand0], registers[i.operand1], registers[i.operand2]);
@@ -175,7 +175,7 @@ void VirtualMachine::execute() {
       for (uint32_t u = 0u; u < i.operand2; u++) push(0u);
       // return address
       push(*reinterpret_cast<uint32_t*>(&++pc));
-      pc = reinterpret_cast<instruction*>(&value_placeholder[index_placeholder[vm_functions + i.operand1]]);
+      pc = reinterpret_cast<instruction*>(&value_placeholder[i.operand1]);
     } JUMP;
     CASE(RET) {
       // return address
