@@ -21,21 +21,24 @@ void VirtualMachine::execute() {
 #define END_DISPATCH L_END:
   auto pc = reinterpret_cast<instruction*>(&value_placeholder[entry_point]);
   instruction i;
-  static void* table[] = {
-    /* 00 */ &&L_NOP,   /* 01 */ &&L_EXIT, /* 02 */ &&L_DEBUG, /* 03 */ &&L_NOP,
-    /* 04 */ &&L_STORE, /* 05 */ &&L_LOAD, /* 06 */ &&L_PUSH,  /* 07 */ &&L_POP,
-    /* 08 */ &&L_COPY,  /* 09 */ &&L_NOP,  /* 0a */ &&L_SOUT,  /* 0b */ &&L_CASL,
-    /* 0c */ &&L_ADDL,  /* 0d */ &&L_SUBL, /* 0e */ &&L_ANDL,  /* 0f */ &&L_ORL,
+  static void* table[] = { // TODO IOUT IIN
+    /* 00 */ &&L_NOP,   /* 01 */ &&L_EXIT, /* 02 */ &&L_BP,   /* 03 */ &&L_NOP,
+    /* 04 */ &&L_STORE, /* 05 */ &&L_LOAD, /* 06 */ &&L_PUSH, /* 07 */ &&L_POP,
+    /* 08 */ &&L_COPY,  /* 09 */ &&L_NOP,  /* 0a */ &&L_SOUT, /* 0b */ &&L_CASL,
+    /* 0c */ &&L_ADDL,  /* 0d */ &&L_SUBL, /* 0e */ &&L_ANDL, /* 0f */ &&L_ORL,
 
-    /* 10 */ &&L_ADD,   /* 11 */ &&L_SUB,  /* 12 */ &&L_MUL,   /* 13 */ &&L_DIV,
-    /* 14 */ &&L_GT,    /* 15 */ &&L_GE,   /* 16 */ &&L_LT,    /* 17 */ &&L_LE,
-    /* 18 */ &&L_EQ,    /* 19 */ &&L_AND,  /* 1a */ &&L_OR,    /* 1b */ &&L_NOT,
-    /* 1c */ &&L_CONST, /* 1d */ &&L_NOP,  /* 1e */ &&L_IOUT,  /* 1f */ &&L_IIN,
+    /* 10 */ &&L_ADDR,  /* 11 */ &&L_SUBR, /* 12 */ &&L_MULR, /* 13 */ &&L_DIVR,
+    /* 14 */ &&L_ADDI,  /* 15 */ &&L_SUBI, /* 16 */ &&L_MULI, /* 17 */ &&L_DIVI,
+    /* 18 */ &&L_GT,    /* 19 */ &&L_GE,   /* 1a */ &&L_EQ,   /* 1b */ &&L_CONST,
+    /* 1c */ &&L_AND,   /* 1d */ &&L_OR,   /* 1e */ &&L_NOT,  /* 1f */ &&L_NOP,
 
-    /* 20 */ &&L_GOTO,  /* 21 */ &&L_BACK, /* 22 */ &&L_NOP,   /* 23 */ &&L_NOP,
-    /* 24 */ &&L_IFGT,  /* 25 */ &&L_IFGE, /* 26 */ &&L_IFLT,  /* 27 */ &&L_IFLE,
-    /* 28 */ &&L_IFEQ,  /* 29 */ &&L_NEW,  /* 2a */ &&L_SET,   /* 2b */ &&L_GET,
-    /* 2c */ &&L_CALL,  /* 2d */ &&L_RET,  /* 2e */ &&L_NOP,   /* 2f */ &&L_NOP,
+    /* 20 */ &&L_GOTO,  /* 21 */ &&L_BACK, /* 22 */ &&L_NOP,  /* 23 */ &&L_NOP,
+    /* 24 */ &&L_IFGT,  /* 25 */ &&L_IFGE, /* 26 */ &&L_IFEQ, /* 27 */ &&L_IOUT,
+    /* 28 */ &&L_IIN,   /* 29 */ &&L_NEW,  /* 2a */ &&L_SET,  /* 2b */ &&L_GET,
+    /* 2c */ &&L_CALL,  /* 2d */ &&L_RET,  /* 2e */ &&L_NOP,  /* 2f */ &&L_NOP,
+
+	/* 30 */ &&L_SHLR,  /* 31 */ &&L_SHRR, /* 32 */ &&L_NOP,  /* 33 */ &&L_NOP,
+	/* 34 */ &&L_SHLI,  /* 35 */ &&L_SHRI, /* 36 */ &&L_NOP,  /* 37 */ &&L_NOP,
   };
   INIT_DISPATCH {
     CASE(NOP) {
@@ -43,7 +46,7 @@ void VirtualMachine::execute() {
     CASE(EXIT) {
       goto L_END;
     } NEXT;
-    CASE(DEBUG) {
+    CASE(BP) {
     // TODO
       pc++;
       printf("debug | type: %x operand0: %x operand1: %x operand2: %x\n",
@@ -82,29 +85,35 @@ void VirtualMachine::execute() {
     CASE(ORL) {
       __sync_fetch_and_or(&registers[i.operand0], registers[i.operand1]);
     } NEXT;
-    CASE(ADD) {
+    CASE(ADDR) {
       registers[i.operand0] = registers[i.operand1] + registers[i.operand2];
     } NEXT;
-    CASE(SUB) {
+    CASE(SUBR) {
       registers[i.operand0] = registers[i.operand1] - registers[i.operand2];
     } NEXT;
-    CASE(MUL) {
+    CASE(MULR) {
       registers[i.operand0] = registers[i.operand1] * registers[i.operand2];
     } NEXT;
-    CASE(DIV) {
+    CASE(DIVR) {
       registers[i.operand0] = registers[i.operand1] / registers[i.operand2];
+    } NEXT;
+	CASE(ADDI) {
+      registers[i.operand0] = registers[i.operand1] + i.operand2;
+    } NEXT;
+    CASE(SUBI) {
+      registers[i.operand0] = registers[i.operand1] - i.operand2;
+    } NEXT;
+    CASE(MULI) {
+      registers[i.operand0] = registers[i.operand1] * i.operand2;
+    } NEXT;
+    CASE(DIVI) {
+      registers[i.operand0] = registers[i.operand1] / i.operand2;
     } NEXT;
     CASE(GT) {
       registers[i.operand0] = registers[i.operand1] > registers[i.operand2];
     } NEXT;
     CASE(GE) {
       registers[i.operand0] = registers[i.operand1] >= registers[i.operand2];
-    } NEXT;
-    CASE(LT) {
-      registers[i.operand0] = registers[i.operand1] < registers[i.operand2];
-    } NEXT;
-    CASE(LE) {
-      registers[i.operand0] = registers[i.operand1] <= registers[i.operand2];
     } NEXT;
     CASE(EQ) {
       registers[i.operand0] = registers[i.operand1] == registers[i.operand2];
@@ -139,14 +148,6 @@ void VirtualMachine::execute() {
     } JUMP;
     CASE(IFGE) {
       if (registers[i.operand1] >= registers[i.operand2]) pc += i.operand0;
-      else pc++;
-    } JUMP;
-    CASE(IFLT) {
-      if (registers[i.operand1] < registers[i.operand2]) pc += i.operand0;
-      else pc++;
-    } JUMP;
-    CASE(IFLE) {
-      if (registers[i.operand1] <= registers[i.operand2]) pc += i.operand0;
       else pc++;
     } JUMP;
     CASE(IFEQ) {
@@ -184,6 +185,18 @@ void VirtualMachine::execute() {
       // base pointer
       base_pointer = pop();
     } JUMP;
+	CASE(SHLR) {
+	  registers[i.operand0] = registers[i.operand1] << registers[i.operand2];
+	} NEXT;
+	CASE(SHRR) {
+	  registers[i.operand0] = registers[i.operand1] >> registers[i.operand2];
+	} NEXT;
+	CASE(SHLI) {
+      registers[i.operand0] = registers[i.operand1] << i.operand2;
+	} NEXT;
+	CASE(SHRI) {
+	  registers[i.operand0] = registers[i.operand1] << i.operand2;
+	} NEXT;
   } END_DISPATCH;
 }
 #undef INIT_DISPATCH

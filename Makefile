@@ -6,6 +6,8 @@ run: build
 
 .PHONY: check
 check: src/test.cpp
+	@mkdir -p tmp
+	@mkdir -p tgt
 	@touch tmp/_test1.wc
 	@touch tmp/_test2.wc
 	@touch tmp/_test3.wc
@@ -19,7 +21,6 @@ check: src/test.cpp
 build: src/main.cpp src/VirtualMachine.cpp src/jit_compiler.cpp src/converter.cpp src/error.cpp src/ll.cpp
 	@mkdir -p tmp
 	@mkdir -p tgt
-	@make check
 	@clang++ src/main.cpp src/VirtualMachine.cpp src/jit_compiler.cpp src/converter.cpp src/error.cpp src/ll.cpp -o tgt/rcwt -g -Wall -ldl
 
 .PHONY: clean
