@@ -6,6 +6,19 @@
 
 using namespace std;
 
+bool is_little_endian() {
+#if defined(__LITTLE_ENDIAN__)
+  return true;
+#elif defined(__BIG_ENDIAN__)
+  return false;
+#else
+  int e = 1;
+  if (*reinterpret_cast<char*>(&e)) return true;
+  else return false;
+#endif
+}
+
+
 uint32_t gen(string const& type, uint8_t operand0, uint8_t operand1, uint8_t operand2) {
   unordered_map<string, uint8_t> str2ins = {
     {"nop",   0x00u}, {"NOP",   0x00u},
@@ -50,7 +63,8 @@ uint32_t gen(string const& type, uint8_t operand0, uint8_t operand1, uint8_t ope
     {"call",  0x2cu}, {"CALL",  0x2cu},
     {"ret",   0x2du}, {"RET",   0x2du}
   };
-  return (str2ins[type] << 24) + (operand0 << 16) + (operand1 << 8) + operand2;
+  if (is_little_endian()) return str2ins[type] + (operand0 << 8) + (operand1 << 16) + (operand2 << 24);
+  else return (str2ins[type] << 24) + (operand0 << 16) + (operand1 << 8) + operand2;
 }
 
 uint32_t ti;

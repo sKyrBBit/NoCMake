@@ -18,21 +18,12 @@ void error(string const&);
 void file_not_found(string const&);
 void file_invalid(string const&);
 
-#if defined(__LITTLE_ENDIAN__)
-struct instruction {
-  uint8_t operand2;
-  uint8_t operand1;
-  uint8_t operand0;
-  uint8_t type;
-};
-#elif defined(__BIG_ENDIAN__)
 struct instruction {
   uint8_t type;
   uint8_t operand0;
   uint8_t operand1;
   uint8_t operand2;
 };
-# endif
 struct vm_function_attribute {
   string type;
   string name;
